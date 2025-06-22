@@ -12,11 +12,19 @@ import (
 
 type application struct {
 	config config
-	store store.Storage
+	store  store.Storage
+}
+
+type dbConfig struct {
+	addr         string
+	maxOpenConns int
+	maxIdleConns int
+	maxIdleTime  string
 }
 
 type config struct {
 	addr string
+	db   dbConfig
 }
 
 func (app *application) mount() http.Handler {
@@ -29,7 +37,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Route(
-		"/v1", func(r chi.Router){
+		"/v1", func(r chi.Router) {
 			r.Get("/health", app.healthCheckHandler)
 		},
 	)
@@ -41,11 +49,11 @@ func (app *application) mount() http.Handler {
 func (app *application) run(mux http.Handler) error {
 
 	srv := &http.Server{
-		Addr: app.config.addr,
-		Handler: mux,
+		Addr:         app.config.addr,
+		Handler:      mux,
 		WriteTimeout: time.Second * 30,
-		ReadTimeout: time.Second * 10,
-		IdleTimeout: time.Minute,
+		ReadTimeout:  time.Second * 10,
+		IdleTimeout:  time.Minute,
 	}
 
 	log.Printf("server has started at %s", app.config.addr)
